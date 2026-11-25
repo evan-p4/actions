@@ -1,0 +1,29 @@
+# Runs ./setup-r with install-check-tools true and false on each OS, then
+# checks that R starts and reports whether qpdf ended up on the PATH.
+on:
+  push:
+    branches: [verify-install-check-tools]
+
+name: verify install-check-tools
+
+permissions: read-all
+
+jobs:
+  setup-r:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        install-check-tools: ["true", "false"]
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} (install-check-tools=${{ matrix.install-check-tools }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./setup-r
+        with:
+          install-check-tools: ${{ matrix.install-check-tools }}
+      - name: R starts
+        run: Rscript -e 'cat(R.version.string, "\n")'
+      - name: Report qpdf
+        shell: bash
+        run: command -v qpdf || echo "qpdf is not on the PATH"
