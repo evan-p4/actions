@@ -140,7 +140,11 @@ async function acquireR(version: IRVersion) {
 
   // version.rtools_version is always truthy on Windows, but typescript
   // does not know that
-  if (IS_WINDOWS && version.rtools) {
+  if (
+    IS_WINDOWS &&
+    version.rtools &&
+    core.getInput("install-check-tools") === "true"
+  ) {
     try {
       await acquireGsWindows();
     } catch (error: any) {
@@ -284,8 +288,6 @@ async function acquireFortranMacOSOld(): Promise<string> {
 }
 
 async function acquireUtilsMacOS() {
-  // qpdf is needed by `--as-cran`
-  // https://github.com/r-lib/actions/issues/948
   try {
     process.env.HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK = "true";
     await exec.exec(
@@ -298,17 +300,17 @@ async function acquireUtilsMacOS() {
   }
   try {
     process.env.HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK = "true";
-    await exec.exec("brew", [
-      "install",
-      "qpdf",
-      "pkgconfig",
-      "checkbashisms",
-      "ghostscript",
-    ], { silent: true });
+    const brewPackages = ["pkgconfig"];
+    if (core.getInput("install-check-tools") === "true") {
+      // qpdf is needed by `--as-cran`
+      // https://github.com/r-lib/actions/issues/948
+      brewPackages.push("qpdf", "checkbashisms", "ghostscript");
+    }
+    await exec.exec("brew", ["install", ...brewPackages], { silent: true });
   } catch (error) {
     core.debug(`${error}`);
 
-    throw `Failed to install qpdf: ${error}`;
+    throw `Failed to install Homebrew packages: ${error}`;
   }
 }
 
@@ -360,10 +362,14 @@ async function acquireRUbuntu(version: IRVersion): Promise<string> {
         "sudo DEBIAN_FRONTEND=noninteractive apt-get update -y",
       );
     });
-    // install gdbi-core and also qpdf, which is used by `--as-cran`
+    // gdebi installs R below; the others are for `R CMD check --as-cran`
     await core.group("Installing R system requirements", async () => {
+      const aptPackages = ["gdebi-core"];
+      if (core.getInput("install-check-tools") === "true") {
+        aptPackages.push("qpdf", "devscripts", "ghostscript");
+      }
       await exec.exec(
-        "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gdebi-core qpdf devscripts ghostscript",
+        `sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ${aptPackages.join(" ")}`,
       );
     });
     await core.group("Installing R", async () => {

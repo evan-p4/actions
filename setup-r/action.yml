@@ -49,6 +49,11 @@ inputs:
       use the existing installation in the GitHub Action image. Note that if it
       is "false", you probably need to run `sudo apt-get update` yourself.'
     default: "true"
+  install-check-tools:
+    description: 'Whether to install the tools that `R CMD check --as-cran`
+      uses: qpdf, Ghostscript, and checkbashisms on Linux and macOS, and
+      Ghostscript on Windows.'
+    default: "true"
   windows-path-include-rtools:
     description: "Whether to add Rtools to the PATH."
     default: "true"

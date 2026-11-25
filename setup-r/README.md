@@ -70,6 +70,10 @@ This action sets up an R environment for use in actions by:
   image. Note that if it is “false”, you probably need to run
   `sudo apt-get update` yourself.
 
+- **install-check-tools** (`true`) - Whether to install the tools that
+  `R CMD check --as-cran` uses: qpdf, Ghostscript, and checkbashisms on
+  Linux and macOS, and Ghostscript on Windows.
+
 - **windows-path-include-rtools** (`true`) - Whether to add Rtools to
   the PATH.
 
